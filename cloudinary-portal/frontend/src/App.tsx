@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/clerk-react';
-import { Cloud, ArrowLeft, Shield, Plus, Trash2, FolderPlus } from 'lucide-react';
+import { Cloud, ArrowLeft, Shield, FolderPlus } from 'lucide-react';
 import FolderList from './components/FolderList';
 import UploadModal from './components/UploadModal';
 import CreateFolderModal from './components/CreateFolderModal';

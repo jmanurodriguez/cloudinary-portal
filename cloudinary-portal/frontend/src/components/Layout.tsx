@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/clerk-react';
-import { Cloud, User, Shield } from 'lucide-react';
+import { Cloud, Shield } from 'lucide-react';
 import { isUserAdmin } from '../lib/clerk';
 
 interface LayoutProps {

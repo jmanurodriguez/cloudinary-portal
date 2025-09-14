@@ -15,7 +15,7 @@ export const isUserAdmin = (userEmail?: string | null): boolean => {
 
   const adminEmailList = CLERK_CONFIG.adminEmails
     .split(',')
-    .map(email => email.trim());
+    .map((email: string) => email.trim());
 
   return adminEmailList.includes(userEmail);
 };
