@@ -1,4 +1,6 @@
 {
+  "name": "cloudinary-portal",
+  "version": 2,
   "builds": [
     {
       "src": "frontend/package.json",
@@ -10,10 +12,8 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
+      "src": "/.*",
+      "dest": "/index.html"
     }
-  ],
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist"
+  ]
 }
