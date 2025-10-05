@@ -22,3 +22,6 @@ export const config = {
     '/(api|trpc)(.*)',
   ],
 }
+
+// Forzar Node.js runtime para evitar errores de Edge Runtime con Clerk
+export const runtime = 'nodejs'
