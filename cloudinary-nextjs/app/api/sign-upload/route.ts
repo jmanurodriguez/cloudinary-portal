@@ -34,13 +34,15 @@ export async function POST(request: NextRequest) {
 
     // Generar timestamp y firma para upload seguro
     const timestamp = Math.round(new Date().getTime() / 1000);
-    
+
+    // No incluir resource_type en la firma si es 'auto'
+    const paramsToSign: Record<string, any> = {
+      timestamp,
+      folder
+    };
+
     const signature = cloudinary.utils.api_sign_request(
-      {
-        timestamp,
-        folder,
-        resource_type
-      },
+      paramsToSign,
       process.env.CLOUDINARY_API_SECRET!
     );
 

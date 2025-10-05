@@ -117,7 +117,12 @@ export const uploadFileToCloudinary = async (
       reject(new Error('Error al subir archivo a Cloudinary'));
     });
 
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/upload`);
+    // Para resource_type 'auto', usar el endpoint base 'upload'
+    const uploadEndpoint = signatureData.resource_type === 'auto'
+      ? `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/upload`
+      : `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/${signatureData.resource_type}/upload`;
+
+    xhr.open('POST', uploadEndpoint);
     xhr.send(formData);
   });
 };

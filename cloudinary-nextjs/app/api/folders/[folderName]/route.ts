@@ -43,14 +43,14 @@ export async function GET(
     // Combinar y formatear todos los recursos con URLs firmadas
     const allFiles = [
       ...imageResources.resources.map((file: any) => {
-        // Generar URL firmada para el archivo
-        const signedUrl = cloudinary.url(file.public_id, {
+        // Generar URL firmada para el archivo con expiración de 24 horas
+        const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 horas
+        const signedUrl = cloudinary.utils.private_download_url(file.public_id, file.format, {
           resource_type: 'image',
-          type: file.type,
-          sign_url: true,
-          secure: true
+          type: 'upload',
+          expires_at: expiresAt
         });
-        
+
         return {
           public_id: file.public_id,
           url: signedUrl,
@@ -66,14 +66,14 @@ export async function GET(
         };
       }),
       ...rawResources.resources.map((file: any) => {
-        // Generar URL firmada para archivos raw
-        const signedUrl = cloudinary.url(file.public_id, {
+        // Generar URL firmada para archivos raw con expiración de 24 horas
+        const expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 horas
+        const signedUrl = cloudinary.utils.private_download_url(file.public_id, file.format, {
           resource_type: 'raw',
-          type: file.type,
-          sign_url: true,
-          secure: true
+          type: 'upload',
+          expires_at: expiresAt
         });
-        
+
         return {
           public_id: file.public_id,
           url: signedUrl,
