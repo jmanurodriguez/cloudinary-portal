@@ -40,32 +40,52 @@ export async function GET(
       resource_type: 'raw'
     });
 
-    // Combinar y formatear todos los recursos
+    // Combinar y formatear todos los recursos con URLs firmadas
     const allFiles = [
-      ...imageResources.resources.map((file: any) => ({
-        public_id: file.public_id,
-        url: file.secure_url,
-        format: file.format,
-        resource_type: file.resource_type,
-        type: file.type,
-        created_at: file.created_at,
-        bytes: file.bytes,
-        width: file.width,
-        height: file.height,
-        folder: file.folder,
-        filename: file.public_id.split('/').pop()
-      })),
-      ...rawResources.resources.map((file: any) => ({
-        public_id: file.public_id,
-        url: file.secure_url,
-        format: file.format,
-        resource_type: file.resource_type,
-        type: file.type,
-        created_at: file.created_at,
-        bytes: file.bytes,
-        folder: file.folder,
-        filename: file.public_id.split('/').pop()
-      }))
+      ...imageResources.resources.map((file: any) => {
+        // Generar URL firmada para el archivo
+        const signedUrl = cloudinary.url(file.public_id, {
+          resource_type: 'image',
+          type: file.type,
+          sign_url: true,
+          secure: true
+        });
+        
+        return {
+          public_id: file.public_id,
+          url: signedUrl,
+          format: file.format,
+          resource_type: file.resource_type,
+          type: file.type,
+          created_at: file.created_at,
+          bytes: file.bytes,
+          width: file.width,
+          height: file.height,
+          folder: file.folder,
+          filename: file.public_id.split('/').pop()
+        };
+      }),
+      ...rawResources.resources.map((file: any) => {
+        // Generar URL firmada para archivos raw
+        const signedUrl = cloudinary.url(file.public_id, {
+          resource_type: 'raw',
+          type: file.type,
+          sign_url: true,
+          secure: true
+        });
+        
+        return {
+          public_id: file.public_id,
+          url: signedUrl,
+          format: file.format,
+          resource_type: file.resource_type,
+          type: file.type,
+          created_at: file.created_at,
+          bytes: file.bytes,
+          folder: file.folder,
+          filename: file.public_id.split('/').pop()
+        };
+      })
     ];
 
     // Ordenar por fecha de creación (más reciente primero)
