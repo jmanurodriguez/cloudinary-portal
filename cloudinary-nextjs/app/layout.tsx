@@ -36,20 +36,11 @@ export const metadata: Metadata = {
     siteName: "Cloudvault",
     locale: "es_ES",
     type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Cloudvault - Gestión de Archivos",
-      },
-    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Cloudvault - Gestión Inteligente de Archivos",
     description: "Sistema profesional de almacenamiento en la nube con seguridad empresarial.",
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -62,17 +53,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
-  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
