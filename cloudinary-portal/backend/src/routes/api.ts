@@ -80,6 +80,9 @@ router.post('/sign-upload', async (req, res) => {
       process.env.CLOUDINARY_API_SECRET!
     );
 
+    console.log('Generando firma con params:', params);
+    console.log('Firma generada:', signature);
+
     const response: ApiResponse<SignUploadResponse> = {
       success: true,
       data: {

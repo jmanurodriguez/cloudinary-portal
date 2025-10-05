@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ApiResponse, CloudinaryFolder, SignUploadResponse, UploadProgress } from '../types';
 
 // Configuración base de la API
-const API_BASE_URL = 'http://localhost:3003/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -68,11 +68,11 @@ export const uploadFileToCloudinary = async (
 ): Promise<any> => {
   const formData = new FormData();
 
-  // Agregar el archivo y los datos necesarios para la subida (mismo orden que la firma)
+  // Agregar los datos en el MISMO ORDEN que se generó la firma
   formData.append('file', file);
-  formData.append('folder', signatureData.folder);
-  formData.append('timestamp', signatureData.timestamp.toString());
   formData.append('api_key', signatureData.api_key);
+  formData.append('timestamp', signatureData.timestamp.toString());
+  formData.append('folder', signatureData.folder);
   formData.append('signature', signatureData.signature);
 
   try {
@@ -98,7 +98,9 @@ export const uploadFileToCloudinary = async (
 
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.error?.message || 'Error al subir archivo a Cloudinary');
+    console.error('Error detallado de Cloudinary:', error.response?.data);
+    const errorMessage = error.response?.data?.error?.message || error.response?.data?.error || 'Error al subir archivo a Cloudinary';
+    throw new Error(errorMessage);
   }
 };
 

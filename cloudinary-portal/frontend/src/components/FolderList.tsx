@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Folder, RefreshCw, AlertCircle } from 'lucide-react';
-import { useUser, useAuth } from '@clerk/clerk-react';
 import { CloudinaryFolder } from '../types';
 import { getFolders, deleteFolder } from '../services/api';
-import { isUserAdmin } from '../lib/clerk';
 import FolderCard from './FolderCard';
+
+// Importaciones opcionales de Clerk
+let useUser: any = null;
+let useAuth: any = null;
+let isUserAdmin: any = null;
+
+try {
+  const clerkReact = require('@clerk/clerk-react');
+  useUser = clerkReact.useUser;
+  useAuth = clerkReact.useAuth;
+  const clerkLib = require('../lib/clerk');
+  isUserAdmin = clerkLib.isUserAdmin;
+} catch (e) {
+  // Clerk no disponible
+}
 
 interface FolderListProps {
   onFolderSelect: (folder: CloudinaryFolder) => void;
@@ -16,9 +29,24 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
   const [error, setError] = useState<string | null>(null);
   const [deletingFolders, setDeletingFolders] = useState<Set<string>>(new Set());
 
-  const { user, isSignedIn } = useUser();
-  const { getToken } = useAuth();
-  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  // Intentar usar Clerk si está disponible
+  let user: any = null;
+  let isSignedIn = false;
+  let getToken: any = null;
+  let isAdmin = false;
+
+  try {
+    if (useUser && useAuth) {
+      const clerkUser = useUser();
+      const clerkAuth = useAuth();
+      user = clerkUser.user;
+      isSignedIn = clerkUser.isSignedIn || false;
+      getToken = clerkAuth.getToken;
+      isAdmin = isSignedIn && isUserAdmin && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+    }
+  } catch (e) {
+    // Sin autenticación
+  }
 
   const loadFolders = async () => {
     try {
@@ -41,14 +69,17 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
     setDeletingFolders(prev => new Set(prev).add(folder.name));
 
     try {
-      // Obtener token de autenticación
-      const token = await getToken();
-      if (!token) {
-        throw new Error('No se pudo obtener el token de autorización');
+      // Obtener token de autenticación si está disponible
+      let token = null;
+      if (getToken) {
+        token = await getToken();
+        if (!token) {
+          throw new Error('No se pudo obtener el token de autorización');
+        }
       }
 
       // Llamar a la API para eliminar la carpeta
-      await deleteFolder(folder.name, token);
+      await deleteFolder(folder.name, token || '');
 
       // Recargar carpetas después de eliminar
       await loadFolders();

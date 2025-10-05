@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { X, FolderPlus, Loader } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
 import { createFolder } from '../services/api';
+
+// Importación opcional de Clerk
+let useAuth: any = null;
+try {
+  const clerkReact = require('@clerk/clerk-react');
+  useAuth = clerkReact.useAuth;
+} catch (e) {
+  // Clerk no disponible
+}
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -17,7 +25,17 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [folderName, setFolderName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { getToken } = useAuth();
+  
+  // Intentar usar Clerk si está disponible
+  let getToken: any = null;
+  try {
+    if (useAuth) {
+      const clerkAuth = useAuth();
+      getToken = clerkAuth.getToken;
+    }
+  } catch (e) {
+    // Sin autenticación
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,14 +56,17 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     setError(null);
 
     try {
-      // Obtener token de autenticación de Clerk
-      const token = await getToken();
-      if (!token) {
-        throw new Error('No se pudo obtener el token de autorización');
+      // Obtener token de autenticación de Clerk si está disponible
+      let token = null;
+      if (getToken) {
+        token = await getToken();
+        if (!token) {
+          throw new Error('No se pudo obtener el token de autorización');
+        }
       }
 
       // Llamar a la API para crear la carpeta
-      await createFolder(folderName.trim(), token);
+      await createFolder(folderName.trim(), token || '');
 
       onSuccess(folderName.trim());
       handleClose();

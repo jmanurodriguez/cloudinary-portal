@@ -11,9 +11,23 @@ function App() {
   const [selectedFolder, setSelectedFolder] = useState<CloudinaryFolder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
-  const { isSignedIn, user, isLoaded } = useUser();
+  
+  // Intentar usar Clerk solo si está disponible
+  let isSignedIn = false;
+  let user: any = null;
+  let isLoaded = true;
+  let isAdmin = false;
 
-  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  try {
+    const clerkUser = useUser();
+    isSignedIn = clerkUser.isSignedIn || false;
+    user = clerkUser.user;
+    isLoaded = clerkUser.isLoaded;
+    isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  } catch (error) {
+    // Clerk no disponible, usar modo sin autenticación
+    console.log('Ejecutando sin autenticación Clerk');
+  }
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
     setSelectedFolder(folder);
@@ -61,44 +75,53 @@ function App() {
                 </div>
               )}
 
-              {/* Authentication */}
-              {!isLoaded && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
-              )}
+              {/* Authentication - Solo si Clerk está disponible */}
+              {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
+               import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'tu_clerk_publishable_key_aqui' ? (
+                <>
+                  {!isLoaded && (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                  )}
 
-              {isLoaded && !isSignedIn && (
-                <div className="flex items-center gap-2">
-                  <SignInButton mode="modal">
-                    <button className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                      Iniciar Sesión
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                      Registrarse
-                    </button>
-                  </SignUpButton>
-                </div>
-              )}
+                  {isLoaded && !isSignedIn && (
+                    <div className="flex items-center gap-2">
+                      <SignInButton mode="modal">
+                        <button className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                          Iniciar Sesión
+                        </button>
+                      </SignInButton>
+                      <SignUpButton mode="modal">
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                          Registrarse
+                        </button>
+                      </SignUpButton>
+                    </div>
+                  )}
 
-              {isLoaded && isSignedIn && (
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-700">
-                      {user?.firstName || 'Usuario'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {user?.emailAddresses[0]?.emailAddress}
-                    </p>
-                  </div>
-                  <UserButton
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: "w-10 h-10",
-                      }
-                    }}
-                  />
+                  {isLoaded && isSignedIn && (
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-700">
+                          {user?.firstName || 'Usuario'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {user?.emailAddresses[0]?.emailAddress}
+                        </p>
+                      </div>
+                      <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                          elements: {
+                            avatarBox: "w-10 h-10",
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full">
+                  <span className="text-sm text-gray-600">Modo desarrollo (sin auth)</span>
                 </div>
               )}
 

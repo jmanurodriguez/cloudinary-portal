@@ -15,23 +15,53 @@ const UploadModal: React.FC<UploadModalProps> = ({ folder, isOpen, onClose }) =>
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Límite de tamaño de archivo en bytes (10 MB para plan gratuito de Cloudinary)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
 
     const newFiles = Array.from(files);
-    setSelectedFiles(prev => [...prev, ...newFiles]);
     
-    // Inicializar estados de subida para los nuevos archivos
-    const newUploadStates = new Map(uploadStates);
+    // Filtrar archivos que excedan el límite de tamaño
+    const validFiles: File[] = [];
+    const invalidFiles: { name: string; size: number }[] = [];
+
     newFiles.forEach(file => {
-      const fileKey = `${file.name}-${file.size}`;
-      newUploadStates.set(fileKey, {
-        isUploading: false,
-        progress: { loaded: 0, total: 0, percentage: 0 },
-        result: null
-      });
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push({ name: file.name, size: file.size });
+      } else {
+        validFiles.push(file);
+      }
     });
-    setUploadStates(newUploadStates);
+
+    // Mostrar alerta si hay archivos demasiado grandes
+    if (invalidFiles.length > 0) {
+      const fileList = invalidFiles
+        .map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)} MB)`)
+        .join('\n');
+      alert(
+        `❌ Los siguientes archivos exceden el límite de 10 MB:\n\n${fileList}\n\n` +
+        `Por favor, selecciona archivos más pequeños o actualiza tu plan de Cloudinary.`
+      );
+    }
+
+    // Agregar solo los archivos válidos
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      
+      // Inicializar estados de subida para los nuevos archivos válidos
+      const newUploadStates = new Map(uploadStates);
+      validFiles.forEach(file => {
+        const fileKey = `${file.name}-${file.size}`;
+        newUploadStates.set(fileKey, {
+          isUploading: false,
+          progress: { loaded: 0, total: 0, percentage: 0 },
+          result: null
+        });
+      });
+      setUploadStates(newUploadStates);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -212,8 +242,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ folder, isOpen, onClose }) =>
             <p className="text-lg font-medium text-gray-700 mb-2">
               Arrastra archivos aquí o haz clic para seleccionar
             </p>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 mb-2">
               Soporta imágenes, documentos y otros tipos de archivo
+            </p>
+            <p className="text-xs text-amber-600 mb-4 font-medium">
+              ⚠️ Tamaño máximo: 10 MB por archivo
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
