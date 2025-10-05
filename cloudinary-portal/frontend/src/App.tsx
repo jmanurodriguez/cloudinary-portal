@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { Cloud, ArrowLeft, Shield, FolderPlus, Upload } from 'lucide-react';
 import FolderList from './components/FolderList';
 import FileGallery from './components/FileGallery';
@@ -8,28 +7,29 @@ import CreateFolderModal from './components/CreateFolderModal';
 import { CloudinaryFolder } from './types';
 import { isUserAdmin } from './lib/clerk';
 
+// Importar Clerk dinámicamente
+// @ts-ignore
+const clerkModule = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'tu_clerk_publishable_key_aqui' 
+  ? require('@clerk/clerk-react') 
+  : null;
+
+const useUser = clerkModule?.useUser || (() => ({ isSignedIn: false, user: null, isLoaded: true }));
+const UserButton = clerkModule?.UserButton || (() => null);
+const SignInButton = clerkModule?.SignInButton || (() => null);
+const SignUpButton = clerkModule?.SignUpButton || (() => null);
+
 function App() {
   const [selectedFolder, setSelectedFolder] = useState<CloudinaryFolder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Intentar usar Clerk solo si está disponible
-  let isSignedIn = false;
-  let user: any = null;
-  let isLoaded = true;
-  let isAdmin = false;
-
-  try {
-    const clerkUser = useUser();
-    isSignedIn = clerkUser.isSignedIn || false;
-    user = clerkUser.user;
-    isLoaded = clerkUser.isLoaded;
-    isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
-  } catch (error) {
-    // Clerk no disponible, usar modo sin autenticación
-    console.log('Ejecutando sin autenticación Clerk');
-  }
+  // Usar Clerk si está disponible
+  const clerkUser = useUser();
+  const isSignedIn = clerkUser.isSignedIn || false;
+  const user = clerkUser.user;
+  const isLoaded = clerkUser.isLoaded;
+  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
     setSelectedFolder(folder);
@@ -82,8 +82,7 @@ function App() {
               )}
 
               {/* Authentication - Solo si Clerk está disponible */}
-              {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
-               import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'tu_clerk_publishable_key_aqui' ? (
+              {clerkModule ? (
                 <>
                   {!isLoaded && (
                     <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
