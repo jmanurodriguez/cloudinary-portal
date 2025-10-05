@@ -10,6 +10,29 @@ cloudinary.config({
 
 export async function GET(request: NextRequest) {
   try {
+    // Debug: Log environment variables
+    console.log('Environment variables check:', {
+      hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+      hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+      hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME
+    });
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Cloudinary credentials not configured',
+          details: {
+            hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+            hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+            hasApiSecret: !!process.env.CLOUDINARY_API_SECRET
+          }
+        },
+        { status: 500 }
+      );
+    }
+
     // Buscar todas las carpetas en la raíz de la cuenta
     const result = await cloudinary.api.root_folders();
 
