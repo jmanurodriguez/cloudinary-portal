@@ -49,6 +49,90 @@ router.get('/folders', async (req, res) => {
 });
 
 /**
+ * GET /api/folders/:folderName/files
+ * Obtiene todos los archivos de una carpeta específica en Cloudinary
+ */
+router.get('/folders/:folderName/files', async (req, res) => {
+  try {
+    const { folderName } = req.params;
+
+    // Validar nombre de carpeta
+    if (!folderName || !isValidFolderName(folderName)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nombre de carpeta inválido'
+      });
+    }
+
+    // Obtener recursos de la carpeta (imágenes y videos)
+    const imageResources = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: `${folderName}/`,
+      max_results: 500,
+      resource_type: 'image'
+    });
+
+    // Obtener recursos de tipo raw (documentos, PDFs, etc.)
+    const rawResources = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: `${folderName}/`,
+      max_results: 500,
+      resource_type: 'raw'
+    });
+
+    // Combinar y formatear todos los recursos
+    const allFiles = [
+      ...imageResources.resources.map((file: any) => ({
+        public_id: file.public_id,
+        url: file.secure_url,
+        format: file.format,
+        resource_type: file.resource_type,
+        type: file.type,
+        created_at: file.created_at,
+        bytes: file.bytes,
+        width: file.width,
+        height: file.height,
+        folder: file.folder,
+        filename: file.public_id.split('/').pop()
+      })),
+      ...rawResources.resources.map((file: any) => ({
+        public_id: file.public_id,
+        url: file.secure_url,
+        format: file.format,
+        resource_type: file.resource_type,
+        type: file.type,
+        created_at: file.created_at,
+        bytes: file.bytes,
+        folder: file.folder,
+        filename: file.public_id.split('/').pop()
+      }))
+    ];
+
+    // Ordenar por fecha de creación (más reciente primero)
+    allFiles.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const response: ApiResponse<any[]> = {
+      success: true,
+      data: allFiles,
+      message: `Se encontraron ${allFiles.length} archivos en la carpeta ${folderName}`
+    };
+
+    res.json(response);
+
+  } catch (error: any) {
+    console.error('Error al obtener archivos:', error);
+    
+    const response: ApiResponse = {
+      success: false,
+      error: 'Error al obtener los archivos de la carpeta',
+      message: error.message || 'Error interno del servidor'
+    };
+
+    res.status(500).json(response);
+  }
+});
+
+/**
  * POST /api/sign-upload
  * Genera una firma segura para la subida de archivos
  */

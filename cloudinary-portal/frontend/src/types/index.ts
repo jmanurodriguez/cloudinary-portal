@@ -11,6 +11,20 @@ export interface CloudinaryFolder {
   path: string;
 }
 
+export interface CloudinaryFile {
+  public_id: string;
+  url: string;
+  format: string;
+  resource_type: string;
+  type: string;
+  created_at: string;
+  bytes: number;
+  width?: number;
+  height?: number;
+  folder: string;
+  filename: string;
+}
+
 export interface SignUploadResponse {
   signature: string;
   timestamp: number;

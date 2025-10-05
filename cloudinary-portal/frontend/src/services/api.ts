@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, CloudinaryFolder, SignUploadResponse, UploadProgress } from '../types';
+import { ApiResponse, CloudinaryFolder, CloudinaryFile, SignUploadResponse, UploadProgress } from '../types';
 
 // Configuración base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
@@ -32,6 +32,23 @@ export const getFolders = async (): Promise<CloudinaryFolder[]> => {
       return response.data.data;
     } else {
       throw new Error(response.data.error || 'Error al obtener carpetas');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Error de conexión al servidor');
+  }
+};
+
+/**
+ * Obtiene todos los archivos de una carpeta específica
+ */
+export const getFolderFiles = async (folderName: string): Promise<CloudinaryFile[]> => {
+  try {
+    const response = await api.get<ApiResponse<CloudinaryFile[]>>(`/folders/${folderName}/files`);
+    
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.error || 'Error al obtener archivos');
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.error || 'Error de conexión al servidor');

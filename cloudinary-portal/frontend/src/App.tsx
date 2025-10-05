@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/clerk-react';
-import { Cloud, ArrowLeft, Shield, FolderPlus } from 'lucide-react';
+import { Cloud, ArrowLeft, Shield, FolderPlus, Upload } from 'lucide-react';
 import FolderList from './components/FolderList';
+import FileGallery from './components/FileGallery';
 import UploadModal from './components/UploadModal';
 import CreateFolderModal from './components/CreateFolderModal';
 import { CloudinaryFolder } from './types';
@@ -11,6 +12,7 @@ function App() {
   const [selectedFolder, setSelectedFolder] = useState<CloudinaryFolder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Intentar usar Clerk solo si está disponible
   let isSignedIn = false;
@@ -31,12 +33,16 @@ function App() {
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
     setSelectedFolder(folder);
+  };
+
+  const handleOpenUploadModal = () => {
     setIsUploadModalOpen(true);
   };
 
   const handleCloseUploadModal = () => {
     setIsUploadModalOpen(false);
-    setSelectedFolder(null);
+    // Refrescar la galería después de subir archivos
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleCreateFolderSuccess = (folderName: string) => {
@@ -154,7 +160,7 @@ function App() {
               </div>
             )}
 
-            {/* Header con botón de crear (solo admin) */}
+            {/* Header con botón de crear (solo admin) o botón de subir */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -162,13 +168,26 @@ function App() {
                 </h2>
                 <p className="text-gray-600">
                   {selectedFolder
-                    ? 'Aquí puedes subir tus archivos a esta carpeta específica.'
-                    : 'Selecciona una carpeta para subir archivos o gestiona las carpetas como administrador.'
+                    ? 'Archivos subidos en esta carpeta. Haz clic en "Subir Archivos" para agregar más.'
+                    : 'Selecciona una carpeta para ver y subir archivos.'
                   }
                 </p>
               </div>
 
-              {/* Botón Crear Carpeta (solo admin) */}
+              {/* Botón Subir Archivos (cuando hay carpeta seleccionada) */}
+              {selectedFolder && (
+                <div className="mt-4 sm:mt-0">
+                  <button
+                    onClick={handleOpenUploadModal}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+                  >
+                    <Upload className="w-5 h-5" />
+                    Subir Archivos
+                  </button>
+                </div>
+              )}
+
+              {/* Botón Crear Carpeta (solo admin y sin carpeta seleccionada) */}
               {isAdmin && !selectedFolder && (
                 <div className="mt-4 sm:mt-0">
                   <button
@@ -182,27 +201,40 @@ function App() {
               )}
             </div>
 
-            {/* Lista de carpetas */}
-            <FolderList onFolderSelect={handleFolderSelect} />
-
-            {/* Información adicional */}
-            <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6">
-              <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                💡 Información Importante
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
-                <div className="space-y-2">
-                  <p>• Los archivos se suben directamente a Cloudinary de forma segura</p>
-                  <p>• Puedes subir múltiples archivos a la vez</p>
-                  <p>• El progreso de subida se muestra en tiempo real</p>
-                </div>
-                <div className="space-y-2">
-                  <p>• Formatos soportados: imágenes, documentos PDF, archivos de texto, etc.</p>
-                  <p>• Si no ves la carpeta que necesitas, contacta al administrador</p>
-                  {isAdmin && <p>• Como admin, puedes crear y eliminar carpetas</p>}
-                </div>
+            {/* Contenido condicional: Galería o Lista de carpetas */}
+            {selectedFolder ? (
+              <div className="space-y-6">
+                <FileGallery 
+                  key={refreshKey}
+                  folderName={selectedFolder.name}
+                  onRefresh={() => setRefreshKey(prev => prev + 1)}
+                />
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Lista de carpetas */}
+                <FolderList onFolderSelect={handleFolderSelect} />
+
+                {/* Información adicional */}
+                <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-2xl p-6">
+                  <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    💡 Información Importante
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
+                    <div className="space-y-2">
+                      <p>• Los archivos se suben directamente a Cloudinary de forma segura</p>
+                      <p>• Puedes subir múltiples archivos a la vez</p>
+                      <p>• El progreso de subida se muestra en tiempo real</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p>• Formatos soportados: imágenes, documentos PDF, archivos de texto, etc.</p>
+                      <p>• Si no ves la carpeta que necesitas, contacta al administrador</p>
+                      {isAdmin && <p>• Como admin, puedes crear y eliminar carpetas</p>}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>
