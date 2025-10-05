@@ -5,7 +5,6 @@ import { useUser, useAuth } from '@clerk/nextjs';
 import { RefreshCw, AlertCircle, FileText, Image as ImageIcon, File, Download, ExternalLink, Calendar, HardDrive, Trash2 } from 'lucide-react';
 import { CloudinaryFile } from '@/types';
 import { getFolderFiles, deleteFile } from '@/lib/api';
-import { isUserAdmin, isDevelopmentMode } from '@/lib/clerk';
 
 interface FileGalleryProps {
   folderName: string;
@@ -17,12 +16,31 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
+  const [canDelete, setCanDelete] = useState(false);
 
-  const { user, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
   const { getToken } = useAuth();
-  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
-  const isDevelopment = isDevelopmentMode();
-  const canDelete = isDevelopment || isAdmin;
+
+  // Verificar permisos de admin desde el servidor
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!isSignedIn) {
+        setCanDelete(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/check-admin');
+        const data = await response.json();
+        setCanDelete(data.isAdmin || false);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setCanDelete(false);
+      }
+    };
+
+    checkAdmin();
+  }, [isSignedIn]);
 
   const loadFiles = async () => {
     try {

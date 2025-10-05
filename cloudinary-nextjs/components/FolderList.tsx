@@ -7,7 +7,6 @@ import { Folder, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
 import { CloudinaryFolder } from '@/types';
 import { getFolders, deleteFolder } from '@/lib/api';
 import FolderCard from './FolderCard';
-import { isUserAdmin, isDevelopmentMode } from '@/lib/clerk';
 
 interface FolderListProps {
   onFolderSelect: (folder: CloudinaryFolder) => void;
@@ -18,12 +17,31 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingFolders, setDeletingFolders] = useState<Set<string>>(new Set());
+  const [canDelete, setCanDelete] = useState(false);
 
-  const { user, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
   const { getToken } = useAuth();
-  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
-  const isDevelopment = isDevelopmentMode();
-  const canDelete = isDevelopment || isAdmin;
+
+  // Verificar permisos de admin desde el servidor
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!isSignedIn) {
+        setCanDelete(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/check-admin');
+        const data = await response.json();
+        setCanDelete(data.isAdmin || false);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setCanDelete(false);
+      }
+    };
+
+    checkAdmin();
+  }, [isSignedIn]);
 
   const loadFolders = async () => {
     try {
