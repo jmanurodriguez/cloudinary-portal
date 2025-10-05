@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/nextjs';
 import { Cloud, ArrowLeft, Shield, FolderPlus, Upload, Sparkles } from 'lucide-react';
 import FolderList from '@/components/FolderList';
@@ -8,21 +8,37 @@ import FileGallery from '@/components/FileGallery';
 import UploadModal from '@/components/UploadModal';
 import CreateFolderModal from '@/components/CreateFolderModal';
 import { CloudinaryFolder } from '@/types';
-import { isUserAdmin, isDevelopmentMode } from '@/lib/clerk';
 
 export default function Home() {
   const [selectedFolder, setSelectedFolder] = useState<CloudinaryFolder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  
+  const [canCreateFolder, setCanCreateFolder] = useState(false);
+
   // Usar Clerk
   const { isSignedIn, user, isLoaded } = useUser();
-  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
-  
-  // En desarrollo local, permitir acciones de admin sin autenticación
-  const isDevelopment = isDevelopmentMode();
-  const canCreateFolder = isDevelopment || isAdmin;
+
+  // Verificar permisos de admin desde el servidor
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!isSignedIn) {
+        setCanCreateFolder(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/check-admin');
+        const data = await response.json();
+        setCanCreateFolder(data.isAdmin || false);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setCanCreateFolder(false);
+      }
+    };
+
+    checkAdmin();
+  }, [isSignedIn]);
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
     setSelectedFolder(folder);
@@ -65,7 +81,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 rounded-full border border-amber-200">
                   <Shield className="w-4 h-4 text-amber-600" />
                   <span className="text-sm font-medium text-amber-700">
-                    {isDevelopment && !isAdmin ? 'Dev Mode' : 'Admin'}
+                    Admin
                   </span>
                 </div>
               )}
