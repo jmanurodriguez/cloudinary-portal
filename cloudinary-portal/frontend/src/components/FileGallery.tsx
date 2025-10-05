@@ -153,12 +153,39 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
                   alt={file.filename}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   loading="lazy"
+                  onError={(e) => {
+                    // Si la imagen falla al cargar, mostrar ícono
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.nextElementSibling) {
+                      (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                    }
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  {getFileIcon(file)}
-                </div>
-              )}
+              ) : null}
+              
+              {/* Fallback para archivos no imagen o PDFs */}
+              <div 
+                className={`w-full h-full flex flex-col items-center justify-center gap-3 ${isImage(file) ? 'hidden' : ''}`}
+                style={{ display: isImage(file) ? 'none' : 'flex' }}
+              >
+                {file.format?.toLowerCase() === 'pdf' ? (
+                  <>
+                    <FileText className="w-16 h-16 text-red-500" />
+                    <div className="text-center px-4">
+                      <p className="text-sm font-medium text-gray-700">Documento PDF</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatBytes(file.bytes)}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <File className="w-16 h-16 text-gray-400" />
+                    <div className="text-center px-4">
+                      <p className="text-sm font-medium text-gray-700">{file.format?.toUpperCase()}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatBytes(file.bytes)}</p>
+                    </div>
+                  </>
+                )}
+              </div>
               
               {/* Overlay con acciones */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">

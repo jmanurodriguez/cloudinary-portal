@@ -1,25 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { Folder, RefreshCw, AlertCircle } from 'lucide-react';
 import { CloudinaryFolder } from '../types';
 import { getFolders, deleteFolder } from '../services/api';
 import FolderCard from './FolderCard';
-
-// Importaciones opcionales de Clerk
-let useUser: any = null;
-let useAuth: any = null;
-let isUserAdmin: any = null;
-
-try {
-  // @ts-ignore - Clerk es opcional
-  const clerkReact = require('@clerk/clerk-react');
-  useUser = clerkReact.useUser;
-  useAuth = clerkReact.useAuth;
-  // @ts-ignore - Clerk es opcional
-  const clerkLib = require('../lib/clerk');
-  isUserAdmin = clerkLib.isUserAdmin;
-} catch (e) {
-  // Clerk no disponible
-}
+import { isUserAdmin } from '../lib/clerk';
 
 interface FolderListProps {
   onFolderSelect: (folder: CloudinaryFolder) => void;
@@ -31,24 +16,10 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
   const [error, setError] = useState<string | null>(null);
   const [deletingFolders, setDeletingFolders] = useState<Set<string>>(new Set());
 
-  // Intentar usar Clerk si está disponible
-  let user: any = null;
-  let isSignedIn = false;
-  let getToken: any = null;
-  let isAdmin = false;
-
-  try {
-    if (useUser && useAuth) {
-      const clerkUser = useUser();
-      const clerkAuth = useAuth();
-      user = clerkUser.user;
-      isSignedIn = clerkUser.isSignedIn || false;
-      getToken = clerkAuth.getToken;
-      isAdmin = isSignedIn && isUserAdmin && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
-    }
-  } catch (e) {
-    // Sin autenticación
-  }
+  // Usar Clerk
+  const { user, isSignedIn } = useUser();
+  const { getToken } = useAuth();
+  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
 
   const loadFolders = async () => {
     try {

@@ -56,10 +56,10 @@ const FolderCard: React.FC<FolderCardProps> = ({
           {isAdmin && !isDeleting && (
             <button
               onClick={handleDelete}
-              className="opacity-0 group-hover:opacity-100 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition-all duration-200 hover:scale-110"
+              className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition-all duration-200 hover:scale-110 opacity-100 group-hover:opacity-100"
               title="Eliminar carpeta"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-5 h-5" />
             </button>
           )}
 

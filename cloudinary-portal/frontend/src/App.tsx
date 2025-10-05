@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUser, UserButton, SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { Cloud, ArrowLeft, Shield, FolderPlus, Upload } from 'lucide-react';
 import FolderList from './components/FolderList';
 import FileGallery from './components/FileGallery';
@@ -7,28 +8,14 @@ import CreateFolderModal from './components/CreateFolderModal';
 import { CloudinaryFolder } from './types';
 import { isUserAdmin } from './lib/clerk';
 
-// Importar Clerk dinámicamente
-// @ts-ignore
-const clerkModule = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'tu_clerk_publishable_key_aqui' 
-  ? require('@clerk/clerk-react') 
-  : null;
-
-const useUser = clerkModule?.useUser || (() => ({ isSignedIn: false, user: null, isLoaded: true }));
-const UserButton = clerkModule?.UserButton || (() => null);
-const SignInButton = clerkModule?.SignInButton || (() => null);
-const SignUpButton = clerkModule?.SignUpButton || (() => null);
-
 function App() {
   const [selectedFolder, setSelectedFolder] = useState<CloudinaryFolder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Usar Clerk si está disponible
-  const clerkUser = useUser();
-  const isSignedIn = clerkUser.isSignedIn || false;
-  const user = clerkUser.user;
-  const isLoaded = clerkUser.isLoaded;
+  // Usar Clerk
+  const { isSignedIn, user, isLoaded } = useUser();
   const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
@@ -81,52 +68,44 @@ function App() {
                 </div>
               )}
 
-              {/* Authentication - Solo si Clerk está disponible */}
-              {clerkModule ? (
-                <>
-                  {!isLoaded && (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
-                  )}
+              {/* Authentication */}
+              {!isLoaded && (
+                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+              )}
 
-                  {isLoaded && !isSignedIn && (
-                    <div className="flex items-center gap-2">
-                      <SignInButton mode="modal">
-                        <button className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                          Iniciar Sesión
-                        </button>
-                      </SignInButton>
-                      <SignUpButton mode="modal">
-                        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                          Registrarse
-                        </button>
-                      </SignUpButton>
-                    </div>
-                  )}
+              {isLoaded && !isSignedIn && (
+                <div className="flex items-center gap-2">
+                  <SignInButton mode="modal">
+                    <button className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                      Iniciar Sesión
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                      Registrarse
+                    </button>
+                  </SignUpButton>
+                </div>
+              )}
 
-                  {isLoaded && isSignedIn && (
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-700">
-                          {user?.firstName || 'Usuario'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {user?.emailAddresses[0]?.emailAddress}
-                        </p>
-                      </div>
-                      <UserButton
-                        afterSignOutUrl="/"
-                        appearance={{
-                          elements: {
-                            avatarBox: "w-10 h-10",
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full">
-                  <span className="text-sm text-gray-600">Modo desarrollo (sin auth)</span>
+              {isLoaded && isSignedIn && (
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-700">
+                      {user?.firstName || 'Usuario'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user?.emailAddresses[0]?.emailAddress}
+                    </p>
+                  </div>
+                  <UserButton
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-10 h-10",
+                      }
+                    }}
+                  />
                 </div>
               )}
 

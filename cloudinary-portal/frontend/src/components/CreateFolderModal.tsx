@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { X, FolderPlus, Loader } from 'lucide-react';
 import { createFolder } from '../services/api';
-
-// Importación opcional de Clerk
-let useAuth: any = null;
-try {
-  // @ts-ignore - Clerk es opcional
-  const clerkReact = require('@clerk/clerk-react');
-  useAuth = clerkReact.useAuth;
-} catch (e) {
-  // Clerk no disponible
-}
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -27,16 +18,8 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Intentar usar Clerk si está disponible
-  let getToken: any = null;
-  try {
-    if (useAuth) {
-      const clerkAuth = useAuth();
-      getToken = clerkAuth.getToken;
-    }
-  } catch (e) {
-    // Sin autenticación
-  }
+  // Usar Clerk
+  const { getToken } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
