@@ -20,6 +20,10 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
   const { user, isSignedIn } = useUser();
   const { getToken } = useAuth();
   const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  
+  // En desarrollo local (localhost), permitir acciones de admin sin autenticación
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const canDelete = isDevelopment || isAdmin;
 
   const loadFolders = async () => {
     try {
@@ -137,8 +141,8 @@ const FolderList: React.FC<FolderListProps> = ({ onFolderSelect }) => {
             key={folder.path}
             folder={folder}
             onSelect={onFolderSelect}
-            onDelete={isAdmin ? handleDeleteFolder : undefined}
-            isAdmin={isAdmin}
+            onDelete={canDelete ? handleDeleteFolder : undefined}
+            isAdmin={canDelete}
             isDeleting={deletingFolders.has(folder.name)}
           />
         ))}

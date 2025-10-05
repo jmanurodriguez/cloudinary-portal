@@ -163,3 +163,25 @@ export const deleteFolder = async (folderName: string, authToken: string): Promi
     throw new Error(error.response?.data?.error || 'Error de conexión al servidor');
   }
 };
+
+/**
+ * Elimina un archivo individual (solo administradores)
+ */
+export const deleteFile = async (publicId: string, authToken: string): Promise<void> => {
+  try {
+    // Codificar el public_id para que funcione con rutas
+    const encodedPublicId = encodeURIComponent(publicId);
+    
+    const response = await api.delete<ApiResponse>(`/files/${encodedPublicId}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Error al eliminar archivo');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Error de conexión al servidor');
+  }
+};

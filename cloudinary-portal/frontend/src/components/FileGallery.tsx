@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, AlertCircle, FileText, Image as ImageIcon, File, Download, ExternalLink, Calendar, HardDrive } from 'lucide-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
+import { RefreshCw, AlertCircle, FileText, Image as ImageIcon, File, Download, ExternalLink, Calendar, HardDrive, Trash2 } from 'lucide-react';
 import { CloudinaryFile } from '../types';
-import { getFolderFiles } from '../services/api';
+import { getFolderFiles, deleteFile } from '../services/api';
+import { isUserAdmin } from '../lib/clerk';
 
 interface FileGalleryProps {
   folderName: string;
@@ -12,6 +14,16 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
   const [files, setFiles] = useState<CloudinaryFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
+
+  // Usar Clerk
+  const { user, isSignedIn } = useUser();
+  const { getToken } = useAuth();
+  const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  
+  // En desarrollo local, permitir acciones de admin sin autenticación
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const canDelete = isDevelopment || isAdmin;
 
   const loadFiles = async () => {
     try {
@@ -33,6 +45,40 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
   const handleRefresh = () => {
     loadFiles();
     onRefresh?.();
+  };
+
+  const handleDeleteFile = async (file: CloudinaryFile) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar "${file.filename}"?`)) {
+      return;
+    }
+
+    setDeletingFiles(prev => new Set(prev).add(file.public_id));
+
+    try {
+      // Obtener token de autenticación si está disponible
+      let token = null;
+      if (getToken) {
+        token = await getToken();
+        if (!token) {
+          throw new Error('No se pudo obtener el token de autorización');
+        }
+      }
+
+      // Llamar a la API para eliminar el archivo
+      await deleteFile(file.public_id, token || '');
+
+      // Recargar archivos después de eliminar
+      await loadFiles();
+    } catch (error: any) {
+      console.error('Error al eliminar archivo:', error);
+      alert('Error al eliminar el archivo: ' + error.message);
+    } finally {
+      setDeletingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(file.public_id);
+        return newSet;
+      });
+    }
   };
 
   const formatBytes = (bytes: number): string => {
@@ -143,7 +189,9 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
         {files.map((file) => (
           <div
             key={file.public_id}
-            className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+            className={`group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
+              deletingFiles.has(file.public_id) ? 'opacity-50 pointer-events-none' : ''
+            }`}
           >
             {/* Preview */}
             <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
@@ -206,6 +254,16 @@ const FileGallery: React.FC<FileGalleryProps> = ({ folderName, onRefresh }) => {
                 >
                   <Download className="w-4 h-4" />
                 </a>
+                {canDelete && (
+                  <button
+                    onClick={() => handleDeleteFile(file)}
+                    disabled={deletingFiles.has(file.public_id)}
+                    className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={deletingFiles.has(file.public_id) ? "Eliminando..." : "Eliminar archivo"}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Badge de formato */}

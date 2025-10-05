@@ -17,6 +17,10 @@ function App() {
   // Usar Clerk
   const { isSignedIn, user, isLoaded } = useUser();
   const isAdmin = isSignedIn && isUserAdmin(user?.emailAddresses[0]?.emailAddress);
+  
+  // En desarrollo local, permitir acciones de admin sin autenticación
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const canCreateFolder = isDevelopment || isAdmin;
 
   const handleFolderSelect = (folder: CloudinaryFolder) => {
     setSelectedFolder(folder);
@@ -61,10 +65,12 @@ function App() {
             {/* Authentication & Status */}
             <div className="flex items-center gap-4">
               {/* Indicador de Admin */}
-              {isAdmin && (
+              {canCreateFolder && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 rounded-full border border-amber-200">
                   <Shield className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-700">Admin</span>
+                  <span className="text-sm font-medium text-amber-700">
+                    {isDevelopment && !isAdmin ? 'Dev Mode' : 'Admin'}
+                  </span>
                 </div>
               )}
 
@@ -166,7 +172,7 @@ function App() {
               )}
 
               {/* Botón Crear Carpeta (solo admin y sin carpeta seleccionada) */}
-              {isAdmin && !selectedFolder && (
+              {canCreateFolder && !selectedFolder && (
                 <div className="mt-4 sm:mt-0">
                   <button
                     onClick={() => setIsCreateFolderModalOpen(true)}

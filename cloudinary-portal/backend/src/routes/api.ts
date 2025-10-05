@@ -317,4 +317,61 @@ router.delete('/folders/:folderName', requireAuth, requireAdmin, async (req, res
   }
 });
 
+/**
+ * DELETE /api/files/:publicId
+ * Elimina un archivo específico de Cloudinary
+ * Requiere autenticación de admin
+ */
+router.delete('/files/:publicId(*)', optionalAuth, requireAdmin, async (req, res) => {
+  try {
+    const { publicId } = req.params;
+
+    if (!publicId) {
+      return res.status(400).json({
+        success: false,
+        error: 'public_id requerido',
+        message: 'Debes proporcionar el public_id del archivo a eliminar'
+      });
+    }
+
+    console.log(`Intentando eliminar archivo: ${publicId}`);
+
+    // Intentar eliminar como imagen primero
+    let result;
+    try {
+      result = await cloudinary.uploader.destroy(publicId, { 
+        resource_type: 'image',
+        invalidate: true 
+      });
+    } catch (imageError) {
+      // Si falla como imagen, intentar como raw (documentos, PDFs, etc.)
+      result = await cloudinary.uploader.destroy(publicId, { 
+        resource_type: 'raw',
+        invalidate: true 
+      });
+    }
+
+    if (result.result === 'ok' || result.result === 'not found') {
+      const response: ApiResponse = {
+        success: true,
+        message: result.result === 'ok' ? 'Archivo eliminado exitosamente' : 'Archivo no encontrado'
+      };
+      res.json(response);
+    } else {
+      throw new Error('No se pudo eliminar el archivo');
+    }
+
+  } catch (error: any) {
+    console.error('Error al eliminar archivo:', error);
+    
+    const response: ApiResponse = {
+      success: false,
+      error: 'Error al eliminar el archivo',
+      message: error.message || 'Error interno del servidor'
+    };
+
+    res.status(500).json(response);
+  }
+});
+
 export default router;
