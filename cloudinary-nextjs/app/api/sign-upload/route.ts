@@ -24,6 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Debug: Verificar que las variables existan
+    console.log('Environment check:', {
+      hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+      hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+      hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME
+    });
+
     // Generar timestamp y firma para upload seguro
     const timestamp = Math.round(new Date().getTime() / 1000);
     
