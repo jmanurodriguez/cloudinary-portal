@@ -5,6 +5,7 @@ import { createFolder } from '../services/api';
 // Importación opcional de Clerk
 let useAuth: any = null;
 try {
+  // @ts-ignore - Clerk es opcional
   const clerkReact = require('@clerk/clerk-react');
   useAuth = clerkReact.useAuth;
 } catch (e) {

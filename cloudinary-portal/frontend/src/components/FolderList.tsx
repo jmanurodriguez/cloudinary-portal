@@ -10,9 +10,11 @@ let useAuth: any = null;
 let isUserAdmin: any = null;
 
 try {
+  // @ts-ignore - Clerk es opcional
   const clerkReact = require('@clerk/clerk-react');
   useUser = clerkReact.useUser;
   useAuth = clerkReact.useAuth;
+  // @ts-ignore - Clerk es opcional
   const clerkLib = require('../lib/clerk');
   isUserAdmin = clerkLib.isUserAdmin;
 } catch (e) {
